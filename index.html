@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .hide {
+            display: none;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            z-index: 40;
+        }
+        .task-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .priority-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+        .status-dropdown {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        input, select, textarea {
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <!-- Login Section -->
+    <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md transition-all duration-300">
+            <div class="flex justify-center mb-6">
+                <div class="h-16 w-16 bg-indigo-600 rounded-full flex items-center justify-center">
+                    <i class="bi bi-check2-all text-white text-3xl"></i>
+                </div>
+            </div>
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-800">Task Manager Pro</h2>
+            <p class="text-center text-gray-500 mb-6">Sign in to manage your team's tasks</p>
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="bi bi-envelope text-gray-400"></i>
+                        </div>
+                        <input type="email" id="email" class="pl-10 pr-3 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-200" placeholder="Enter your email" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="bi bi-lock text-gray-400"></i>
+                        </div>
+                        <input type="password" id="password" class="pl-10 pr-3 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-200" placeholder="Enter your password" required>
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-150 font-medium flex items-center justify-center">
+                        <i class="bi bi-box-arrow-in-right mr-2"></i> Log In
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hide">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-md sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center">
+                            <i class="bi bi-check2-all text-indigo-600 text-2xl mr-2"></i>
+                            <h1 class="text-xl font-bold text-gray-800">Task Manager Pro</h1>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <span id="userEmail" class="text-gray-600 text-sm hidden md:inline-block"></span>
+                        </div>
+                        <button onclick="logout()" class="text-gray-600 hover:text-gray-800 flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors">
+                            <i class="bi bi-box-arrow-right mr-1"></i> 
+                            <span class="hidden md:inline-block">Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Admin Controls -->
+        <div id="adminControls" class="hide max-w-7xl mx-auto px-4 py-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-1">Dashboard</h2>
+                <p class="text-gray-500">Manage your team and tasks from here</p>
+            </div>
+            
+            <!-- Team Management Section -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-1">Team Management</h2>
+                        <p class="text-gray-500 text-sm">Add and manage your team members</p>
+                    </div>
+                    <button onclick="showAddMemberModal()" class="mt-3 sm:mt-0 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                        <i class="bi bi-person-plus mr-2"></i> Add Team Member
+                    </button>
+                </div>
+                <div id="teamMembersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Team members will be displayed here -->
+                </div>
+            </div>
+
+            <!-- Tasks Management Section -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-1">Tasks</h2>
+                        <p class="text-gray-500 text-sm">Create and assign tasks to your team</p>
+                    </div>
+                    <button onclick="showAddTaskModal()" class="mt-3 sm:mt-0 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                        <i class="bi bi-plus-lg mr-2"></i> Create Task
+                    </button>
+                </div>
+                
+                <!-- Tasks Filter -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="filterTasks('all')" class="task-filter bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 active">All</button>
+                    <button onclick="filterTasks('todo')" class="task-filter bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">To Do</button>
+                    <button onclick="filterTasks('inprogress')" class="task-filter bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">In Progress</button>
+                    <button onclick="filterTasks('completed')" class="task-filter bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">Completed</button>
+                </div>
+                
+                <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Tasks will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Member View -->
+        <div id="memberView" class="hide max-w-7xl mx-auto px-4 py-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-1">My Tasks</h2>
+                <p class="text-gray-500">Manage and update your assigned tasks</p>
+            </div>
+            
+            <!-- Tasks Filter -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="filterMemberTasks('all')" class="member-task-filter bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 active">All</button>
+                    <button onclick="filterMemberTasks('todo')" class="member-task-filter bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">To Do</button>
+                    <button onclick="filterMemberTasks('inprogress')" class="member-task-filter bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">In Progress</button>
+                    <button onclick="filterMemberTasks('completed')" class="member-task-filter bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">Completed</button>
+                </div>
+                
+                <div id="memberTasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Member's tasks will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div id="addMemberModal" class="modal-overlay">
+        <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Add Team Member</h3>
+                    <button onclick="closeModal('addMemberModal')" class="text-gray-400 hover:text-gray-500">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <form id="addMemberForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" id="memberName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" placeholder="Enter team member's name" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" id="memberEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" placeholder="Enter team member's email" required>
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-2">
+                        <button type="button" onclick="closeModal('addMemberModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                            <i class="bi bi-person-plus mr-2"></i> Add Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="modal-overlay">
+        <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Create New Task</h3>
+                    <button onclick="closeModal('addTaskModal')" class="text-gray-400 hover:text-gray-500">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <form id="addTaskForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                        <input type="text" id="taskTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" placeholder="Enter task title" required>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Task Type</label>
+                            <select id="taskType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" required>
+                                <option value="">Select type</option>
+                                <option value="development">Development</option>
+                                <option value="design">Design</option>
+                                <option value="testing">Testing</option>
+                                <option value="documentation">Documentation</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <select id="taskPriority" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" required>
+                                <option value="">Select priority</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="taskDescription" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" rows="3" placeholder="Enter task description"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                        <select id="taskAssignee" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" required>
+                            <!-- Team members will be populated here -->
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <input type="date" id="taskDueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" required>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-2">
+                        <button type="button" onclick="closeModal('addTaskModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <i class="bi bi-plus-lg mr-2"></i> Create Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Task Modal -->
+    <div id="viewTaskModal" class="modal-overlay">
+        <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800" id="viewTaskTitle">Task Details</h3>
+                    <button onclick="closeModal('viewTaskModal')" class="text-gray-400 hover:text-gray-500">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div id="viewTaskDetails" class="space-y-4"></div>
+                    
+                    <div id="viewTaskAttachments">
+                        <h4 class="font-semibold text-gray-700 mb-2">Attachments</h4>
+                        <ul id="attachmentsList" class="text-sm space-y-1 text-gray-600">
+                            <!-- Attachments will be listed here -->
+                        </ul>
+                    </div>
+                    
+                    <div id="adminTaskControls" class="pt-4 border-t border-gray-200 mt-4 flex justify-end space-x-3">
+                        <button onclick="deleteViewedTask()" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center">
+                            <i class="bi bi-trash mr-2"></i> Delete Task
+                        </button>
+                        <button onclick="closeModal('viewTaskModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Note and Attachment Modal -->
+    <div id="addNoteModal" class="modal-overlay">
+        <div class="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Update Task</h3>
+                    <button onclick="closeModal('addNoteModal')" class="text-gray-400 hover:text-gray-500">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <form id="addNoteForm" class="space-y-4">
+                    <input type="hidden" id="noteTaskId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="noteTaskStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200">
+                            <option value="todo">To Do</option>
+                            <option value="inprogress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Progress Note</label>
+                        <textarea id="taskNote" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200" rows="3" placeholder="Add a note about your progress"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Add Attachment</label>
+                        <input type="file" id="taskAttachment" class="w-full px-3 py-2 border border-gray-300 rounded-lg" accept="image/*,.pdf,.doc,.docx">
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-2">
+                        <button type="button" onclick="closeModal('addNoteModal')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center">
+                            <i class="bi bi-check2 mr-2"></i> Update Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated database
+        const users = [
+            { email: 'nisargh@codestudios.in', password: 'Nisargh123!', role: 'admin', name: 'Admin' }
+        ];
+        
+        const tasks = [];
+        let currentUser = null;
+        let currentTaskFilter = 'all';
+        let currentViewTaskId = null;
+
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                document.getElementById('loginSection').classList.add('hide');
+                document.getElementById('dashboard').classList.remove('hide');
+                document.getElementById('userEmail').textContent = user.email;
+                
+                if (user.role === 'admin') {
+                    document.getElementById('adminControls').classList.remove('hide');
+                    document.getElementById('memberView').classList.add('hide');
+                    refreshTeamMembers();
+                    refreshTasks();
+                } else {
+                    document.getElementById('adminControls').classList.add('hide');
+                    document.getElementById('memberView').classList.remove('hide');
+                    refreshMemberTasks();
+                }
+            } else {
+                const loginForm = document.getElementById('loginForm');
+                loginForm.classList.add('animate-shake');
+                
+                // Create error message if it doesn't exist
+                if (!document.getElementById('loginError')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.id = 'loginError';
+                    errorDiv.className = 'text-red-600 text-sm mt-2 text-center';
+                    errorDiv.textContent = 'Invalid email or password';
+                    loginForm.appendChild(errorDiv);
+                }
+                
+                setTimeout(() => {
+                    loginForm.classList.remove('animate-shake');
+                }, 500);
+            }
+        });
+
+        // Add member functionality
+        document.getElementById('addMemberForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('memberName').value.trim();
+            const email = document.getElementById('memberEmail').value.trim();
+            
+            // Check if member email already exists
+            if (users.some(u => u.email === email)) {
+                alert('A user with this email already exists!');
+                return;
+            }
+            
+            // Generate a random password
+            const password = Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 10);
+            
+            users.push({
+                name,
+                email,
+                password,
+                role: 'member',
+                resetPassword: true
+            });
+            
+            document.getElementById('memberName').value = '';
+            document.getElementById('memberEmail').value = '';
+            closeModal('addMemberModal');
+            refreshTeamMembers();
+            
+            // Show confirmation with password
+            const confirmation = document.createElement('div');
+            confirmation.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+            confirmation.innerHTML = `
+                <div class="flex items-start">
+                    <div class="mr-2">
+                        <i class="bi bi-check-circle text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Member added successfully!</p>
+                        <p class="text-sm">Temporary password: <span class="font-mono bg-green-50 px-1 rounded">${password}</span></p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmation);
+            
+            setTimeout(() => {
+                confirmation.style.opacity = '0';
+                confirmation.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(() => confirmation.remove(), 500);
+            }, 5000);
+        });
+
+        // Add task functionality
+        document.getElementById('addTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const task = {
+                id: Date.now().toString(),
+                title: document.getElementById('taskTitle').value.trim(),
+                type: document.getElementById('taskType').value,
+                priority: document.getElementById('taskPriority').value,
+                description: document.getElementById('taskDescription').value.trim(),
+                assignee: document.getElementById('taskAssignee').value,
+                dueDate: document.getElementById('taskDueDate').value,
+                status: 'todo',
+                createdBy: currentUser.email,
+                createdAt: new Date().toISOString(),
+                attachments: [],
+                notes: []
+            };
+            
+            tasks.push(task);
+            
+            // Reset form fields
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskType').selectedIndex = 0;
+            document.getElementById('taskPriority').selectedIndex = 0;
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskAssignee').selectedIndex = 0;
+            document.getElementById('taskDueDate').value = '';
+            
+            closeModal('addTaskModal');
+            refreshTasks();
+            
+            // Show confirmation
+            const confirmation = document.createElement('div');
+            confirmation.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+            confirmation.innerHTML = `
+                <div class="flex">
+                    <div class="mr-2">
+                        <i class="bi bi-check-circle text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Task created successfully!</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmation);
+            
+            setTimeout(() => {
+                confirmation.style.opacity = '0';
+                confirmation.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(() => confirmation.remove(), 500);
+            }, 3000);
+        });
+        
+        // Add note functionality
+        document.getElementById('addNoteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const taskId = document.getElementById('noteTaskId').value;
+            const status = document.getElementById('noteTaskStatus').value;
+            const note = document.getElementById('taskNote').value.trim();
+            const attachment = document.getElementById('taskAttachment').files[0];
+            
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = status;
+                
+                if (note) {
+                    task.notes.unshift({
+                        id: Date.now().toString(),
+                        text: note,
+                        addedBy: currentUser.email,
+                        addedAt: new Date().toISOString()
+                    });
+                }
+                
+                if (attachment) {
+                    task.attachments.push({
+                        id: Date.now().toString() + '-' + attachment.name,
+                        name: attachment.name,
+                        type: attachment.type,
+                        size: attachment.size,
+                        uploadedBy: currentUser.email,
+                        uploadedAt: new Date().toISOString()
+                    });
+                }
+                
+                closeModal('addNoteModal');
+                refreshMemberTasks();
+                
+                // Show confirmation
+                const confirmation = document.createElement('div');
+                confirmation.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+                confirmation.innerHTML = `
+                    <div class="flex">
+                        <div class="mr-2">
+                            <i class="bi bi-check-circle text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Task updated successfully!</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confirmation);
+                
+                setTimeout(() => {
+                    confirmation.style.opacity = '0';
+                    confirmation.style.transition = 'opacity 0.5s ease-out';
+                    setTimeout(() => confirmation.remove(), 500);
+                }, 3000);
+            }
+        });
+
+        // Utility functions
+        function showAddMemberModal() {
+            document.getElementById('addMemberModal').style.display = 'block';
+        }
+
+        function showAddTaskModal() {
+            const select = document.getElementById('taskAssignee');
+            select.innerHTML = '<option value="">Select team member</option>';
+            
+            const teamMembers = users.filter(u => u.role === 'member');
+            if (teamMembers.length === 0) {
+                alert('Please add team members before creating tasks.');
+                return;
+            }
+            
+            teamMembers.forEach(member => {
+                const option = document.createElement('option');
+                option.value = member.email;
+                option.textContent = `${member.name} (${member.email})`;
+                select.appendChild(option);
+            });
+            
+            // Set default due date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+            document.getElementById('taskDueDate').value = tomorrowFormatted;
+            
+            document.getElementById('addTaskModal').style.display = 'block';
+        }
+        
+        function showViewTaskModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            currentViewTaskId = taskId;
+            
+            const modalContent = document.getElementById('viewTaskDetails');
+            const assignee = users.find(u => u.email === task.assignee);
+            
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <h3 class="text-xl font-bold text-gray-800">${task.title}</h3>
+                    <span class="priority-badge ${getPriorityClass(task.priority)}">${capitalizeFirstLetter(task.priority)}</span>
+                </div>
+                
+                <div class="text-gray-500 text-sm flex items-center">
+                    <i class="bi bi-folder mr-1"></i> ${capitalizeFirstLetter(task.type)}
+                </div>
+                
+                ${task.description ? `
+                <div class="mt-3">
+                    <h4 class="font-semibold text-gray-700 mb-1">Description</h4>
+                    <p class="text-gray-600 text-sm">${task.description}</p>
+                </div>` : ''}
+                
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-1">Assigned To</h4>
+                        <p class="text-gray-600 text-sm">${assignee ? assignee.name : 'Unknown'}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-1">Due Date</h4>
+                        <p class="text-gray-600 text-sm">${formatDate(task.dueDate)}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h4 class="font-semibold text-gray-700 mb-1">Status</h4>
+                    <div class="bg-gray-100 rounded-full h-2 mt-2">
+                        <div class="h-2 rounded-full ${getStatusBarColor(task.status)}" style="width: ${getStatusPercentage(task.status)}%"></div>
+                    </div>
+                    <p class="text-right text-xs text-gray-500 mt-1">${capitalizeFirstLetter(task.status)}</p>
+                </div>
+                
+                ${task.notes && task.notes.length > 0 ? `
+                <div class="mt-4">
+                    <h4 class="font-semibold text-gray-700 mb-2">Progress Notes</h4>
+                    <div class="space-y-3">
+                        ${task.notes.map(note => {
+                            const noteAuthor = users.find(u => u.email === note.addedBy);
+                            return `
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-700">${note.text}</p>
+                                    <p class="text-xs text-gray-500 mt-1">By ${noteAuthor ? noteAuthor.name : 'Unknown'} on ${formatDateTime(note.addedAt)}</p>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>` : ''}
+            `;
+            
+            // Populate attachments list
+            const attachmentsList = document.getElementById('attachmentsList');
+            attachmentsList.innerHTML = '';
+            
+            if (task.attachments && task.attachments.length > 0) {
+                task.attachments.forEach(attachment => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center';
+                    li.innerHTML = `
+                        <i class="bi bi-paperclip mr-2"></i>
+                        <span>${attachment.name}</span>
+                    `;
+                    attachmentsList.appendChild(li);
+                });
+            } else {
+                attachmentsList.innerHTML = '<li class="text-gray-500">No attachments</li>';
+            }
+            
+            // Show/hide admin controls
+            if (currentUser.role === 'admin') {
+                document.getElementById('adminTaskControls').style.display = 'flex';
+            } else {
+                document.getElementById('adminTaskControls').style.display = 'none';
+            }
+            
+            document.getElementById('viewTaskModal').style.display = 'block';
+        }
+        
+        function showAddNoteModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            document.getElementById('noteTaskId').value = taskId;
+            document.getElementById('noteTaskStatus').value = task.status;
+            document.getElementById('taskNote').value = '';
+            document.getElementById('taskAttachment').value = '';
+            
+            document.getElementById('addNoteModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function refreshTeamMembers() {
+            const container = document.getElementById('teamMembersList');
+            container.innerHTML = '';
+            
+            const teamMembers = users.filter(u => u.role === 'member');
+            
+            if (teamMembers.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <div class="text-gray-400 text-lg mb-2">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <p class="text-gray-600">No team members yet</p>
+                        <p class="text-gray-500 text-sm">Add team members to assign tasks</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            teamMembers.forEach(member => {
+                // Count member's tasks
+                const memberTasks = tasks.filter(t => t.assignee === member.email);
+                const todoCount = memberTasks.filter(t => t.status === 'todo').length;
+                const inProgressCount = memberTasks.filter(t => t.status === 'inprogress').length;
+                const completedCount = memberTasks.filter(t => t.status === 'completed').length;
+                
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow task-card">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-2">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <h3 class="font-semibold">${member.name}</h3>
+                                <p class="text-gray-600 text-sm">${member.email}</p>
+                            </div>
+                            <div>
+                                <button onclick="resetPassword('${member.email}')" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                                    <i class="bi bi-key mr-1"></i> Reset Password
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                            <h4 class="text-xs uppercase text-gray-500 font-semibold mb-2">Task Status</h4>
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div class="bg-gray-50 rounded p-1">
+                                    <div class="text-lg font-semibold">${todoCount}</div>
+                                    <div class="text-xs text-gray-500">Todo</div>
+                                </div>
+                                <div class="bg-gray-50 rounded p-1">
+                                    <div class="text-lg font-semibold">${inProgressCount}</div>
+                                    <div class="text-xs text-gray-500">In Progress</div>
+                                </div>
+                                <div class="bg-gray-50 rounded p-1">
+                                    <div class="text-lg font-semibold">${completedCount}</div>
+                                    <div class="text-xs text-gray-500">Completed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function refreshTasks() {
+            const container = document.getElementById('tasksList');
+            container.innerHTML = '';
+            
+            // Apply filter
+            let filteredTasks;
+            if (currentTaskFilter === 'all') {
+                filteredTasks = [...tasks];
+            } else {
+                filteredTasks = tasks.filter(task => task.status === currentTaskFilter);
+            }
+            
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <div class="text-gray-400 text-lg mb-2">
+                            <i class="bi bi-clipboard-check"></i>
+                        </div>
+                        <p class="text-gray-600">No tasks found</p>
+                        <p class="text-gray-500 text-sm">Create tasks to get started</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort tasks: first by status (todo, inprogress, completed), then by priority (high, medium, low), then by due date
+            filteredTasks.sort((a, b) => {
+                // First sort by status
+                const statusOrder = { 'todo': 0, 'inprogress': 1, 'completed': 2 };
+                if (statusOrder[a.status] !== statusOrder[b.status]) {
+                    return statusOrder[a.status] - statusOrder[b.status];
+                }
+                
+                // Then sort by priority
+                const priorityOrder = { 'high': 0, 'medium': 1, 'low': 2 };
+                if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+                    return priorityOrder[a.priority] - priorityOrder[b.priority];
+                }
+                
+                // Finally sort by due date
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
+            
+            filteredTasks.forEach(task => {
+                const assignee = users.find(u => u.email === task.assignee);
+                const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
+                const dueDateClass = isOverdue ? 'text-red-600 font-semibold' : 'text-gray-600';
+                
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow task-card ${task.status === 'completed' ? 'opacity-75' : ''}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h3 class="font-semibold mb-1 ${task.status === 'completed' ? 'line-through text-gray-500' : ''}">${task.title}</h3>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <span class="priority-badge ${getPriorityClass(task.priority)}">
+                                        ${capitalizeFirstLetter(task.priority)}
+                                    </span>
+                                    <span class="priority-badge bg-gray-100 text-gray-600">
+                                        ${capitalizeFirstLetter(task.type)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="ml-2">
+                                <button onclick="showTaskActions(this, '${task.id}')" class="text-gray-400 hover:text-gray-600 p-1">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="text-sm mb-3 flex flex-col">
+                            <div class="flex items-center">
+                                <i class="bi bi-person text-gray-400 mr-1"></i>
+                                <span class="text-gray-600">${assignee ? assignee.name : 'Unassigned'}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="bi bi-calendar-event text-gray-400 mr-1"></i>
+                                <span class="${dueDateClass}">
+                                    ${isOverdue ? 'Overdue: ' : ''}${formatDate(task.dueDate)}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-gray-500">Progress</span>
+                                <span class="text-xs font-medium ${getStatusTextColor(task.status)}">
+                                    ${capitalizeFirstLetter(task.status)}
+                                </span>
+                            </div>
+                            <div class="bg-gray-100 rounded-full h-2">
+                                <div class="h-2 rounded-full ${getStatusBarColor(task.status)}" style="width: ${getStatusPercentage(task.status)}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                            <div>
+                                ${task.notes && task.notes.length > 0 ? `
+                                    <span class="text-xs text-gray-500 flex items-center">
+                                        <i class="bi bi-chat-text mr-1"></i> ${task.notes.length} ${task.notes.length === 1 ? 'note' : 'notes'}
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <button onclick="showViewTaskModal('${task.id}')" class="text-indigo-600 hover:text-indigo-800 text-sm flex items-center">
+                                View Details <i class="bi bi-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function refreshMemberTasks() {
+            const container = document.getElementById('memberTasksList');
+            container.innerHTML = '';
+            
+            let memberTasks = tasks.filter(task => task.assignee === currentUser.email);
+            
+            // Apply filter
+            if (currentTaskFilter !== 'all') {
+                memberTasks = memberTasks.filter(task => task.status === currentTaskFilter);
+            }
+            
+            if (memberTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <div class="text-gray-400 text-lg mb-2">
+                            <i class="bi bi-clipboard-check"></i>
+                        </div>
+                        <p class="text-gray-600">No tasks assigned to you</p>
+                        <p class="text-gray-500 text-sm">Your assigned tasks will appear here</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort tasks: first by status (todo, inprogress, completed), then by priority (high, medium, low), then by due date
+            memberTasks.sort((a, b) => {
+                // First sort by status
+                const statusOrder = { 'todo': 0, 'inprogress': 1, 'completed': 2 };
+                if (statusOrder[a.status] !== statusOrder[b.status]) {
+                    return statusOrder[a.status] - statusOrder[b.status];
+                }
+                
+                // Then sort by priority
+                const priorityOrder = { 'high': 0, 'medium': 1, 'low': 2 };
+                if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+                    return priorityOrder[a.priority] - priorityOrder[b.priority];
+                }
+                
+                // Finally sort by due date
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
+            
+            memberTasks.forEach(task => {
+                const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
+                const dueDateClass = isOverdue ? 'text-red-600 font-semibold' : 'text-gray-600';
+                
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow task-card ${task.status === 'completed' ? 'opacity-75' : ''}">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-semibold mb-1 ${task.status === 'completed' ? 'line-through text-gray-500' : ''}">${task.title}</h3>
+                            <span class="priority-badge ${getPriorityClass(task.priority)}">
+                                ${capitalizeFirstLetter(task.priority)}
+                            </span>
+                        </div>
+                        
+                        <div class="text-sm mb-3 flex items-center">
+                            <i class="bi bi-calendar-event text-gray-400 mr-1"></i>
+                            <span class="${dueDateClass}">
+                                ${isOverdue ? 'Overdue: ' : ''}${formatDate(task.dueDate)}
+                            </span>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-gray-500">Progress</span>
+                                <span class="text-xs font-medium ${getStatusTextColor(task.status)}">
+                                    ${capitalizeFirstLetter(task.status)}
+                                </span>
+                            </div>
+                            <div class="bg-gray-100 rounded-full h-2">
+                                <div class="h-2 rounded-full ${getStatusBarColor(task.status)}" style="width: ${getStatusPercentage(task.status)}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                            <div>
+                                ${task.attachments.length > 0 ? `
+                                    <span class="text-xs text-gray-500 flex items-center">
+                                        <i class="bi bi-paperclip mr-1"></i> ${task.attachments.length} ${task.attachments.length === 1 ? 'file' : 'files'}
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="showViewTaskModal('${task.id}')" class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
+                                    <i class="bi bi-eye mr-1"></i> View
+                                </button>
+                                <button onclick="showAddNoteModal('${task.id}')" class="text-indigo-600 hover:text-indigo-800 text-sm flex items-center">
+                                    <i class="bi bi-pencil-square mr-1"></i> Update
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function getPriorityClass(priority) {
+            switch(priority) {
+                case 'high': return 'bg-red-100 text-red-700';
+                case 'medium': return 'bg-yellow-100 text-yellow-700';
+                case 'low': return 'bg-green-100 text-green-700';
+                default: return 'bg-gray-100 text-gray-700';
+            }
+        }
+        
+        function getStatusBarColor(status) {
+            switch(status) {
+                case 'todo': return 'bg-gray-300';
+                case 'inprogress': return 'bg-yellow-400';
+                case 'completed': return 'bg-green-500';
+                default: return 'bg-gray-300';
+            }
+        }
+        
+        function getStatusTextColor(status) {
+            switch(status) {
+                case 'todo': return 'text-gray-600';
+                case 'inprogress': return 'text-yellow-600';
+                case 'completed': return 'text-green-600';
+                default: return 'text-gray-600';
+            }
+        }
+        
+        function getStatusPercentage(status) {
+            switch(status) {
+                case 'todo': return 0;
+                case 'inprogress': return 50;
+                case 'completed': return 100;
+                default: return 0;
+            }
+        }
+
+        function updateTaskStatus(taskId, status) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = status;
+                if (currentUser.role === 'admin') {
+                    refreshTasks();
+                } else {
+                    refreshMemberTasks();
+                }
+            }
+        }
+
+        function deleteTask(taskId) {
+            // Show confirmation dialog
+            if (!confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+                return;
+            }
+            
+            const index = tasks.findIndex(t => t.id === taskId);
+            if (index !== -1) {
+                tasks.splice(index, 1);
+                refreshTasks();
+                
+                // Show confirmation
+                const confirmation = document.createElement('div');
+                confirmation.className = 'fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50';
+                confirmation.innerHTML = `
+                    <div class="flex">
+                        <div class="mr-2">
+                            <i class="bi bi-x-circle text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Task deleted successfully!</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confirmation);
+                
+                setTimeout(() => {
+                    confirmation.style.opacity = '0';
+                    confirmation.style.transition = 'opacity 0.5s ease-out';
+                    setTimeout(() => confirmation.remove(), 500);
+                }, 3000);
+            }
+        }
+        
+        function deleteViewedTask() {
+            if (currentViewTaskId) {
+                closeModal('viewTaskModal');
+                deleteTask(currentViewTaskId);
+            }
+        }
+
+        function handleAttachment(taskId, input) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && input.files.length > 0) {
+                const file = input.files[0];
+                task.attachments.push({
+                    id: Date.now().toString() + '-' + file.name,
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    uploadedBy: currentUser.email,
+                    uploadedAt: new Date().toISOString()
+                });
+                
+                refreshMemberTasks();
+                
+                // Show confirmation
+                alert('Attachment uploaded successfully!');
+            }
+        }
+
+        function resetPassword(email) {
+            const user = users.find(u => u.email === email);
+            if (user) {
+                const newPassword = Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 10);
+                user.password = newPassword;
+                
+                // Show confirmation with password
+                const confirmation = document.createElement('div');
+                confirmation.className = 'fixed bottom-4 right-4 bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-md z-50';
+                confirmation.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="mr-2">
+                            <i class="bi bi-key text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold">Password reset successful!</p>
+                            <p class="text-sm">New password for ${email}: <span class="font-mono bg-blue-50 px-1 rounded">${newPassword}</span></p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confirmation);
+                
+                setTimeout(() => {
+                    confirmation.style.opacity = '0';
+                    confirmation.style.transition = 'opacity 0.5s ease-out';
+                    setTimeout(() => confirmation.remove(), 500);
+                }, 5000);
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginSection').classList.remove('hide');
+            document.getElementById('dashboard').classList.add('hide');
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            
+            // Remove any error message
+            const loginError = document.getElementById('loginError');
+            if (loginError) loginError.remove();
+        }
+        
+        function filterTasks(filter) {
+            currentTaskFilter = filter;
+            
+            // Update active filter button
+            const filterButtons = document.querySelectorAll('.task-filter');
+            filterButtons.forEach(button => {
+                if (button.textContent.toLowerCase().includes(filter)) {
+                    button.classList.remove('bg-gray-100', 'text-gray-700');
+                    button.classList.add('bg-indigo-100', 'text-indigo-700', 'active');
+                } else {
+                    button.classList.remove('bg-indigo-100', 'text-indigo-700', 'active');
+                    button.classList.add('bg-gray-100', 'text-gray-700');
+                }
+            });
+            
+            refreshTasks();
+        }
+        
+        function filterMemberTasks(filter) {
+            currentTaskFilter = filter;
+            
+            // Update active filter button
+            const filterButtons = document.querySelectorAll('.member-task-filter');
+            filterButtons.forEach(button => {
+                if (button.textContent.toLowerCase().includes(filter)) {
+                    button.classList.remove('bg-gray-100', 'text-gray-700');
+                    button.classList.add('bg-indigo-100', 'text-indigo-700', 'active');
+                } else {
+                    button.classList.remove('bg-indigo-100', 'text-indigo-700', 'active');
+                    button.classList.add('bg-gray-100', 'text-gray-700');
+                }
+            });
+            
+            refreshMemberTasks();
+        }
+        
+        function showTaskActions(button, taskId) {
+            // Remove any existing dropdown
+            const existingDropdown = document.querySelector('.task-actions-dropdown');
+            if (existingDropdown) {
+                existingDropdown.remove();
+                return;
+            }
+            
+            // Create dropdown menu
+            const dropdown = document.createElement('div');
+            dropdown.className = 'task-actions-dropdown absolute bg-white shadow-lg rounded-lg py-1 z-10 right-0 mt-1 w-48';
+            dropdown.style.top = (button.offsetTop + button.offsetHeight) + 'px';
+            dropdown.style.right = '1rem';
+            
+            dropdown.innerHTML = `
+                <button onclick="showViewTaskModal('${taskId}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <i class="bi bi-eye mr-2"></i> View Details
+                </button>
+                <button onclick="deleteTask('${taskId}')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                    <i class="bi bi-trash mr-2"></i> Delete Task
+                </button>
+            `;
+            
+            // Add dropdown to document
+            button.parentNode.style.position = 'relative';
+            button.parentNode.appendChild(dropdown);
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function closeDropdown(e) {
+                if (!button.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.remove();
+                    document.removeEventListener('click', closeDropdown);
+                }
+            });
+        }
+        
+        // Helper functions
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+        
+        function formatDateTime(dateTimeString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateTimeString).toLocaleDateString(undefined, options);
+        }
+        
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
